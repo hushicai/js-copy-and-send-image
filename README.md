@@ -1,8 +1,8 @@
 # js-copy-and-send-image
 
-最近有一个需求是把网页版聊天窗口中的图片复制并发送给其他人。
+最近有一个需求是把聊天窗口中的图片复制并发送给其他人。
 
-但是，很不幸，chrome自从2012年以后就JS复制网页图片，这个[issue](https://bugs.chromium.org/p/chromium/issues/detail?id=150835)已经挂在chromium上很多年了，似乎不打算支持了。
+但是，很不幸，chrome自从2012年以后就不支持JS复制网页图片，这个[issue](https://bugs.chromium.org/p/chromium/issues/detail?id=150835)挂在chromium上很多年了，似乎并不打算支持了。
 
 社区上比较著名的clipboard.js也不支持复制图片。
 
