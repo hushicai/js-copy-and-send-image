@@ -199,7 +199,7 @@
                                 if (/\.png|\.jpe?g|\.gif/i.test(s)) {
                                     resolve(s)
                                 } else {
-                                    alert(`not a valid image url '${s}'`);
+                                    alert(`not a valid image url: ${s}`);
                                     reject();
                                 }
                             });
