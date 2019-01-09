@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>js copy and send image</title>
+    <style>
+        div {
+            margin-bottom: 10px;
+        }
+        #input {
+            padding: 10px;
+            height: 40px;
+        }
+        #image {
+            width: 300px;
+            height: 100px;
+        }
+        #textarea {
+            width: 300px;
+            height: 40px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-inner {
+            background-color: #fefefe;
+            margin: 10% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%; /* Could be more or less, depending on screen size */
+        }
+
+        .modal-header {
+            text-align: center;
+            font-size: 26px;
+            color: #666;
+        }
+        .modal-content {
+            text-align: center;
+        }
+        .modal-footer {
+            text-align: center;
+            border-top: 1px solid #e5e5e5;
+        }
+        .cancel, .ok {
+            margin: 20px 10px 0 30px;
+            width: 120px;
+            height: 40px;
+            border: 1px solid #0083C6;
+            border-radius: 3px;
+            font-size: 16px;
+            letter-spacing: 3px;
+            cursor: pointer;
+        }
+        .cancel {
+            background-color: #fff;
+            color: #0083c6;
+        }
+        .ok {
+            background-color: #0083C6;
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+    <div>
+        <img id="image" src="http://hushicai.github.io/css/images/banner.jpg" />
+    </div>
+    <div>
+        <button id="copy">copy</button>
+    </div>
+    <div>
+        <textarea id="textarea"></textarea>
+    </div>
+    <div id="result"></div>
+    <div class="modal">
+        <div class="modal-inner">
+            <div class="modal-header">
+                发送图片
+            </div>
+            <div class="modal-content"></div>
+            <div class="modal-footer">
+                <button class="cancel">取消</button>
+                <button class="ok">发送</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            let modalElement = document.querySelector('.modal');
+            let modalContentElement = document.querySelector('.modal-content');
+            let okElement = document.querySelector('.ok');
+            let cancelElement = document.querySelector('.cancel');
+            let resultElmement = document.getElementById('result');
+            let pending = false;
+            let showModal = (options = {}) => {
+                let {content} = options;
+                modalContentElement.innerHTML = content;
+                modalElement.style.display = 'block';
+            };
+            let closeModal = () => {
+                modalElement.style.display = 'none';
+            };
+            let getDataUrl = url => {
+                return new Promise((resolve, reject) => {
+                    let image = new Image();
+                    image.setAttribute('crossOrigin', 'Anonymous');
+                    image.onload = () => {
+                        let canvas = document.createElement('canvas');
+                        let context = canvas.getContext('2d');
+                        context.drawImage(image, 0, 0);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    image.src = url;
+                });
+            };
+            let copy = dataUrl => {
+                let success = false;
+                const body = document.body;
+
+                if (body) {
+                    // add the text to a hidden node
+                    const node = document.createElement('span');
+                    node.textContent = dataUrl;
+                    node.style.opacity = '0';
+                    node.style.position = 'absolute';
+                    node.style.whiteSpace = 'pre-wrap';
+                    body.appendChild(node);
+
+                    // select the text
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    const range = document.createRange();
+                    range.selectNodeContents(node);
+                    selection.addRange(range);
+
+                    // attempt to copy
+                    try {
+                        document.execCommand('copy');
+                        success = true;
+                    } catch (e) {
+                        console.warn(e);
+                    }
+
+                    // remove selection and node
+                    selection.removeAllRanges();
+                    body.removeChild(node);
+                }
+
+                return success;
+            };
+            let preview = url => {
+                getDataUrl(url).then(dataUrl => {
+                    showModal({
+                        content: `<img class="preview-image" src="${dataUrl}" width="300" height="100" />`
+                    })
+                });
+            };
+            let upload = dataUrl => {
+                pending = true;
+                resultElmement.innerHTML = 'fake uploading...';
+                setTimeout(() => {
+                    pending = false;
+                    resultElmement.innerHTML = `<img src="${dataUrl}" />`;
+                }, 3000);
+            };
+
+            let button = document.getElementById('copy');
+            let image = document.getElementById('image');
+            let textarea = document.getElementById('textarea');
+
+            button.onclick = () => {
+                if (pending) {
+                    return;
+                }
+                copy(image.src);
+            };
+            textarea.onpaste = e => {
+                if (pending) {
+                    return false;
+                }
+                let getClipboradUrl = item => {
+                    return new Promise((resolve, reject) => {
+                        if (item.kind === 'string' && item.type === 'text/plain') {
+                            item.getAsString(s => {
+                                if (/\.png|\.jpe?g|\.gif/i.test(s)) {
+                                    resolve(s)
+                                } else {
+                                    console.warn('not a valid image url');
+                                    reject();
+                                }
+                            });
+                        }
+                    });
+                };
+                let clipboardData = e.clipboardData;
+                if (clipboardData) {
+                    let item = clipboardData.items[0];
+
+                    getClipboradUrl(item).then(preview);
+                }
+                return false;
+            };
+            okElement.onclick = e => {
+                let previewImage = document.querySelector('.preview-image');
+                upload(previewImage.src);
+                closeModal();
+            };
+            cancelElement.onclick = e => {
+                closeModal();
+            };
+            document.body.onclick = e => {
+                if (e.target === modalElement) {
+                    closeModal();
+                }
+            };
+        })();
+    </script>
+</body>
+</html>
