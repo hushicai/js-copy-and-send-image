@@ -6,6 +6,8 @@
 
 社区上比较著名的clipboard.js也不支持复制图片。
 
+w3c新出的[clipboard-apis](https://w3c.github.io/clipboard-apis/)同样不支持复制图片，[社区](https://github.com/w3c/clipboard-apis/issues/44)其实是希望能支持的。
+
 所以只好通过hack的方式来解决了。
 
 解决思路如下：
